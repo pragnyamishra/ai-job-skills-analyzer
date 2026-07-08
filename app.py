@@ -9,7 +9,14 @@ import plotly.graph_objects as go
 from dotenv import load_dotenv
 
 load_dotenv()
-
+import os
+for key in ["GROQ_API_KEY", "RAPID_API_KEY", "PINECONE_API_KEY", 
+            "LANGFUSE_SECRET_KEY", "LANGFUSE_PUBLIC_KEY", "LANGFUSE_HOST"]:
+    if key not in os.environ:
+        try:
+            os.environ[key] = st.secrets[key]
+        except Exception:
+            pass
 from resume_parser import parse_resume
 from agent import run_agent
 from monitoring import get_call_history
