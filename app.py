@@ -23,7 +23,7 @@ from monitoring import get_call_history
 
 st.set_page_config(
     page_title="AI Job Skills Analyzer",
-    page_icon="🎯",
+    page_icon=None,
     layout="wide",
     initial_sidebar_state="expanded",
 )
