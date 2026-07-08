@@ -115,7 +115,7 @@ def node_generate_plan(state: dict) -> dict:
     if not gaps:
         state["step_log"].append("No skill gaps found, you are already well prepared!")
         return {**state, "learning_plan": None, "status": "complete"}
-
+    time.sleep(3)
     state["step_log"].append("Generating your personalized learning plan...")
     plan = generate_learning_plan(gaps, state["job_title"])
     return {**state, "learning_plan": plan, "status": "complete"}
