@@ -1,6 +1,6 @@
 """
 AI Job Skills Analyzer
-Streamlit Frontend
+Streamlit Frontend — Mobile-first responsive design
 """
 
 import os
@@ -9,26 +9,31 @@ import plotly.graph_objects as go
 from dotenv import load_dotenv
 
 load_dotenv()
-import os
-for key in ["GROQ_API_KEY", "RAPID_API_KEY", "PINECONE_API_KEY", 
+
+# Support Streamlit Cloud secrets
+for key in ["GROQ_API_KEY", "RAPID_API_KEY", "PINECONE_API_KEY",
             "LANGFUSE_SECRET_KEY", "LANGFUSE_PUBLIC_KEY", "LANGFUSE_HOST"]:
     if key not in os.environ:
         try:
             os.environ[key] = st.secrets[key]
         except Exception:
             pass
+
 from resume_parser import parse_resume
 from agent import run_agent
 from monitoring import get_call_history
+
+# Collapse sidebar after analysis is done
+sidebar_state = "collapsed" if st.session_state.get("analyzed") else "expanded"
 
 st.set_page_config(
     page_title="AI Job Skills Analyzer",
     page_icon=None,
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state=sidebar_state,
 )
 
-# ── CSS + JS ─────────────────────────────────────────────────────────────────
+# ── CSS ──────────────────────────────────────────────────────────────────────
 
 st.markdown(
     """
@@ -202,72 +207,96 @@ st.markdown(
 
     /* ── Legend ── */
     .chart-legend { font-size: 0.75rem; color: #64748B; margin-top: -0.5rem; margin-bottom: 0.5rem; }
-    </style>
 
-    <script>
-    // Nuclear cleanup: fix Material Symbols ligature text showing as raw text
-    function cleanMaterialIcons() {
-        // Known ligature patterns that Streamlit uses for icons
-        const ligaturePatterns = [
-            'keyboard_double_arrow', 'arrow_forward', 'arrow_back',
-            'arrow_drop', 'expand_more', 'expand_less', 'chevron',
-            'upload', 'close', 'menu', 'more_vert', 'more_horiz',
-            'search', 'check', 'add', 'remove', 'delete', 'edit',
-            'visibility', 'settings', 'info', 'warning', 'error',
-            'navigate', 'first_page', 'last_page', 'unfold', 'sort',
-            'filter', 'refresh', 'sync', 'cloud', 'file', 'folder',
-            'download', 'open_in', 'launch', 'link', 'share',
-            'play_arrow', 'pause', 'stop', 'skip', 'replay'
-        ];
+    /* ══════════════════════════════════════════
+       MOBILE RESPONSIVE  (max-width: 768px)
+       ══════════════════════════════════════════ */
+    @media (max-width: 768px) {
+        .block-container {
+            padding: 0.5rem 0.75rem !important;
+            max-width: 100% !important;
+        }
 
-        document.querySelectorAll('span, button').forEach(function(el) {
-            var text = (el.textContent || '').trim().toLowerCase();
-            // Skip if element has children that are not text
-            if (el.children.length > 0 && el.querySelector('span, div, p, a')) return;
-            // Skip if text is too long (real content, not a ligature)
-            if (text.length > 40) return;
+        /* Header */
+        .app-header {
+            padding: 1rem 1.1rem;
+            margin-bottom: 0.75rem;
+        }
+        .app-header h1 { font-size: 1.1rem; }
+        .app-header p { font-size: 0.75rem; }
 
-            var isLigature = false;
-            for (var i = 0; i < ligaturePatterns.length; i++) {
-                if (text.indexOf(ligaturePatterns[i]) !== -1) {
-                    isLigature = true;
-                    break;
-                }
-            }
+        /* Metrics: 2x2 grid on mobile */
+        .metrics-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+        .m-card { padding: 0.75rem 0.85rem; }
+        .m-card .m-value { font-size: 1.3rem; }
+        .m-card .m-label { font-size: 0.62rem; }
 
-            if (isLigature) {
-                // Check if it's a button — replace text instead of hiding
-                if (el.tagName === 'BUTTON') {
-                    if (text.indexOf('upload') !== -1) {
-                        el.textContent = 'Browse files';
-                    } else {
-                        el.style.fontSize = '0px';
-                        el.style.width = '20px';
-                        el.style.height = '20px';
-                        el.style.overflow = 'hidden';
-                    }
-                } else {
-                    el.style.fontSize = '0px';
-                    el.style.width = '0px';
-                    el.style.overflow = 'hidden';
-                    el.style.display = 'none';
-                }
-            }
-        });
+        /* Pills: slightly smaller */
+        .pill-match, .pill-gap {
+            padding: 0.22rem 0.55rem;
+            font-size: 0.72rem;
+        }
+
+        /* Gap table: simplified 3-col on mobile */
+        .gap-header, .gap-item {
+            grid-template-columns: 24px 1fr 60px;
+        }
+        .gap-item .g-cat,
+        .gap-item .g-freq,
+        .gap-header > div:nth-child(3),
+        .gap-header > div:nth-child(4) {
+            display: none;
+        }
+
+        /* Week cards */
+        .week-card { padding: 0.85rem 1rem; }
+        .week-theme { font-size: 0.88rem; }
+
+        /* Capstone */
+        .capstone { padding: 1rem 1.1rem; }
+
+        /* Monitor row: simplified */
+        .mon-row {
+            grid-template-columns: 32px 1fr 70px;
+            font-size: 0.72rem;
+        }
+        .mon-row > span:last-child { display: none; }
+
+        /* Empty state: stack vertically */
+        .step-box { padding: 1rem; }
+        .step-box h3 { font-size: 0.85rem; }
+
+        /* Section headers */
+        .sec-head { font-size: 0.68rem; margin: 1rem 0 0.5rem 0; }
+
+        /* Chart legend */
+        .chart-legend { font-size: 0.68rem; }
     }
 
-    // Run multiple times to catch dynamically rendered elements
-    setTimeout(cleanMaterialIcons, 300);
-    setTimeout(cleanMaterialIcons, 800);
-    setTimeout(cleanMaterialIcons, 1500);
-    setTimeout(cleanMaterialIcons, 3000);
+    /* ══════════════════════════════════════════
+       SMALL MOBILE  (max-width: 480px)
+       ══════════════════════════════════════════ */
+    @media (max-width: 480px) {
+        .app-header h1 { font-size: 1rem; }
+        .app-header p { font-size: 0.7rem; }
 
-    // Watch for DOM changes (Streamlit re-renders often)
-    var observer = new MutationObserver(function() {
-        setTimeout(cleanMaterialIcons, 100);
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
-    </script>
+        .m-card .m-value { font-size: 1.15rem; }
+        .m-card .m-label { font-size: 0.58rem; }
+        .m-card { padding: 0.6rem 0.7rem; }
+
+        .pill-match, .pill-gap {
+            padding: 0.2rem 0.45rem;
+            font-size: 0.68rem;
+        }
+
+        .week-theme { font-size: 0.82rem; }
+        .week-focus { font-size: 0.72rem; }
+        .week-detail { font-size: 0.75rem; }
+    }
+    </style>
     """,
     unsafe_allow_html=True,
 )
@@ -357,11 +386,11 @@ def render_donut(score):
         textinfo="none", hovertemplate="%{label}: %{value}%<extra></extra>", rotation=90,
     )])
     fig.update_layout(
-        showlegend=False, margin=dict(t=0, b=0, l=0, r=0), height=190,
+        showlegend=False, margin=dict(t=10, b=10, l=10, r=10), height=180,
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
         annotations=[dict(
             text=f"<b>{score}%</b><br><span style='font-size:10px;color:#64748B'>match</span>",
-            x=0.5, y=0.5, font_size=26, font_color="#F1F5F9", showarrow=False,
+            x=0.5, y=0.5, font_size=24, font_color="#F1F5F9", showarrow=False,
         )],
     )
     return fig
@@ -386,7 +415,7 @@ def render_bar(market_skills, matched_names=None):
         hovertemplate="%{y}: %{x} postings<extra></extra>",
     )])
     fig.update_layout(
-        height=max(300, len(top) * 30), margin=dict(t=0, b=0, l=0, r=10),
+        height=max(280, len(top) * 28), margin=dict(t=0, b=0, l=0, r=10),
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
         xaxis=dict(title="Mentions", gridcolor="rgba(255,255,255,0.04)", title_font_size=10, tickfont_size=10),
         yaxis=dict(gridcolor="rgba(255,255,255,0.04)", tickfont_size=11),
@@ -460,6 +489,9 @@ if run_button:
     st.session_state["result"]   = result
     st.session_state["analyzed"] = True
 
+    # Rerun to collapse sidebar and show results
+    st.rerun()
+
 # ── Results ──────────────────────────────────────────────────────────────────
 
 if st.session_state.get("analyzed") and st.session_state.get("result"):
@@ -474,30 +506,7 @@ if st.session_state.get("analyzed") and st.session_state.get("result"):
         f'Analysis for <strong>{result["job_title"]}</strong> '
         f'based on {len(jobs)} live job postings</div>',
         unsafe_allow_html=True,
-        
     )
-    import streamlit.components.v1 as components
-    components.html("""
-    <script>
-    function fixParent() {
-        var doc = window.parent.document;
-        if (!doc) return;
-        doc.querySelectorAll('span, button').forEach(function(el) {
-            var t = (el.textContent || '').trim();
-            if (t === 'uploadUpload' || t === 'upload_fileUpload') {
-                el.textContent = 'Upload';
-            }
-            if (/^(keyboard_double_arrow|arrow_forward_ios|expand_more|expand_less|unfold_more|unfold_less|close|more_vert)/.test(t)) {
-                el.style.fontSize = '0px';
-                el.style.overflow = 'hidden';
-                el.style.width = '0px';
-                el.style.display = 'none';
-            }
-        });
-    }
-    setInterval(fixParent, 500);
-    </script>
-    """, height=0)
 
     render_metrics(
         len(jobs), len(market_skills),
@@ -507,6 +516,7 @@ if st.session_state.get("analyzed") and st.session_state.get("result"):
     matched_list  = gap_report.get("matched_skills", [])
     matched_names = {s.get("skill", "").lower() for s in matched_list if isinstance(s, dict)}
 
+    # On mobile, st.columns([3,2]) stacks automatically.
     col_chart, col_score = st.columns([3, 2])
 
     with col_chart:
@@ -567,6 +577,13 @@ if st.session_state.get("analyzed") and st.session_state.get("result"):
                 </div>""", unsafe_allow_html=True)
         else:
             st.info("No API calls recorded yet.")
+
+    # "New Analysis" button to re-open sidebar
+    st.markdown("---")
+    if st.button("🔄 New Analysis", use_container_width=True):
+        st.session_state["analyzed"] = False
+        st.session_state["result"] = None
+        st.rerun()
 
 # ── Empty state ──────────────────────────────────────────────────────────────
 
