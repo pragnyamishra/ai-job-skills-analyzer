@@ -11,16 +11,15 @@ from datetime import datetime
 from functools import wraps
 
 # Setup file and console logging
+os.makedirs("data", exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(name)s | %(levelname)s | %(message)s",
     handlers=[
-        os.makedirs("data", exist_ok=True)
         logging.FileHandler("data/api_calls.log", mode="a"),
         logging.StreamHandler(),
     ],
 )
-
 logger = logging.getLogger("skills_analyzer")
 
 # In-memory call history for the Streamlit session
